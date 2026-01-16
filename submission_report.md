@@ -1,5 +1,5 @@
 # Hiring Challenge Submission: Flowers-102 Classification
-**Candidate Name**: [Your Name]
+**Candidate Name**: Sanskriti Rai
 **Date**: 2026-01-16
 **Dataset**: Oxford Flowers-102
 
