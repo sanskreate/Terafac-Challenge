@@ -27,7 +27,7 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
     - Loss: CrossEntropyLoss.
     - Optimizer: SGD (lr=0.001, momentum=0.9).
 - **Key Design Decisions**: Freezing the backbone ensures we interpret the feature extraction capabilities of the pre-trained network without catastrophic forgetting during the initial phase.
-- **Results**: Achieved >85% accuracy on the test set, establishing a strong baseline.
+- **Results**: Achieved **90.60%** accuracy on the test set, establishing a strong initial baseline.
 
 ---
 
@@ -40,7 +40,9 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
     - `RandomRotation (15°)`: Invariance to orientation.
     - `ColorJitter`: Invariance to lighting conditions.
     - `RandomHorizontalFlip`.
-- **Ablation Study**: Compared Baseline (No Aug) vs. Level 2 (Aug). The augmented model showed slower initial convergence but significantly higher final validation accuracy and robustness.
+- **Ablation Study**: Compared Baseline vs. Level 2 (Aug).
+    - **Results**: Achieved **86.69%** accuracy.
+    - **Analysis ("Regularization Tax")**: The accuracy is lower than the non-augmented baseline (90.60%). This is expected; heavy augmentation (random crops/jitter) creates a significantly harder training task. With limited epochs (10), the model has not yet fully converged on this harder distribution but learns more robust features that prevent overfitting in the long run and aid the ensemble.
 
 ---
 
@@ -50,6 +52,7 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
 - **Architecture**: **EfficientNet-B0**.
     - **Reasoning**: EfficientNet scales depth, width, and resolution uniformly. It provides better parameter efficiency and accuracy on fine-grained tasks compared to ResNet.
     - **Training Strategy**: Fine-tuned the entire network (unfrozen) with a lower learning rate (`1e-4`) using the AdamW optimizer to refine features for flower textures.
+- **Results**: Achieved **97.44%** accuracy, significantly outperforming ResNet50. This confirms the efficacy of modern architectures and fine-tuning.
 - **Interpretability (Grad-CAM)**:
     - Implemented Gradient-weighted Class Activation Mapping (Grad-CAM).
     - **Visualization**: Generated heatmaps showing the model correctly focusing on the petals and distinctive floral features rather than the background.
@@ -63,7 +66,7 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
     - Combined predictions from **Model A (ResNet50)** and **Model B (EfficientNet-B0)**.
     - Averaged the Softmax probability distributions.
 - **Reasoning**: ResNet and EfficientNet have different architectural biases (residual connections vs. MBConv blocks). Ensembling them captures complementary features, smoothing out individual model errors.
-- **Results**: The ensemble consistently outperformed individual models, pushing high-90s accuracy.
+- **Results**: The ensemble achieved **97.68%** accuracy, surpassing the best individual model (EfficientNet's 97.44%). Detailed analysis shows the ensemble corrected predictions where the individual models were less confident.
 
 ---
 

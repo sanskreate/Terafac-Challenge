@@ -8,3 +8,6 @@ Pillow
 tqdm
 opencv-python
 ipykernel
+onnx
+onnxruntime
+onnxscript
