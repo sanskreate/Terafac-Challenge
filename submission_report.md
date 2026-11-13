@@ -42,7 +42,7 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
     - `RandomHorizontalFlip`.
 - **Ablation Study**: Compared Baseline vs. Level 2 (Aug).
     - **Results**: Achieved **86.69%** accuracy.
-    - **Analysis ("Regularization Tax")**: The accuracy is lower than the non-augmented baseline (90.60%). This is expected; heavy augmentation (random crops/jitter) creates a significantly harder training task. With limited epochs (10), the model has not yet fully converged on this harder distribution but learns more robust features that prevent overfitting in the long run and aid the ensemble.
+    - **Analysis ("Regularization Tax")**: The accuracy is lower than the non-augmented baseline (90.60%). This is expected; heavy augmentation (random crops/jitter) creates a significantly harder training task. With a frozen backbone and a limited budget (15 epochs), the model has not yet fully converged on this harder distribution but learns more robust features that prevent overfitting in the long run and aid the ensemble.
 
 ---
 
@@ -63,7 +63,7 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
 **Objective**: Push accuracy using Ensemble Learning.
 
 - **Approach**: **Soft Voting Ensemble**.
-    - Combined predictions from **Model A (ResNet50)** and **Model B (EfficientNet-B0)**.
+    - Combined predictions from **Model A (ResNet50 with augmentation, from Level 2: 86.69%)** and **Model B (EfficientNet-B0, from Level 3: 97.44%)**.
     - Averaged the Softmax probability distributions.
 - **Reasoning**: ResNet and EfficientNet have different architectural biases (residual connections vs. MBConv blocks). Ensembling them captures complementary features, smoothing out individual model errors.
 - **Results**: The ensemble achieved **97.68%** accuracy, surpassing the best individual model (EfficientNet's 97.44%). Detailed analysis shows the ensemble corrected predictions where the individual models were less confident.
@@ -74,11 +74,19 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
 **Objective**: Optimization for Deployment (<100ms Inference).
 
 - **Techniques**:
-    1.  **Dynamic Quantization**: Converted model weights from FP32 to **INT8**.
-        - *Result*: Reduced model size by ~4x with minimal accuracy loss.
-    2.  **ONNX Export**: Converted the PyTorch model to Open Neural Network Exchange (ONNX) format for cross-platform compatibility.
-- **Benchmarking Results**:
-    - **Latencey**: The ONNX Runtime inference speed successfully met the **< 100ms** target on CPU.
+    1.  **Dynamic Quantization**: Converted the `nn.Linear` weights from FP32 to **INT8** with `torch.quantization.quantize_dynamic`.
+        - *Result*: Model size went from 16.85 MB to 16.46 MB. The reduction is small because dynamic quantization only affects Linear layers, and EfficientNet-B0 is almost entirely convolutional. CPU latency still dropped from 188.23 ms to 55.68 ms.
+    2.  **ONNX Export**: Converted the PyTorch model to Open Neural Network Exchange (ONNX) format with a dynamic batch axis, for cross-platform deployment.
+- **Benchmarking Results** (single 224×224 image on CPU, averaged over 100 runs after 10 warm-up runs):
+
+    | Variant | Model size | Latency |
+    |---|---|---|
+    | PyTorch FP32 | 16.85 MB | 188.23 ms |
+    | PyTorch dynamic INT8 | 16.46 MB | 55.68 ms |
+    | **ONNX Runtime** | – | **12.17 ms** |
+
+    - **Latency**: ONNX Runtime met the **< 100ms** target with a wide margin, about **15× faster** than plain PyTorch.
+- **Next step**: Static INT8 quantization or quantization-aware training would also compress the convolution layers and reduce model size.
 
 ---
 
@@ -89,9 +97,10 @@ I selected the **Flowers-102** dataset, which presents a fine-grained classifica
 ---
 
 ## 8. Code & Notebook Links
-*Please replace the links below with your actual public Google Colab links*
-- **Level 1**: [Colab Link Here]
-- **Level 2**: [Colab Link Here]
-- **Level 3**: [Colab Link Here]
-- **Level 4**: [Colab Link Here]
-- **Level 5**: [Colab Link Here]
+- **Repository**: [github.com/sanskreate/Terafac-Challenge](https://github.com/sanskreate/Terafac-Challenge)
+- **Level 1 (Baseline)**: [level_1/Level_1_Baseline.ipynb](level_1/Level_1_Baseline.ipynb)
+- **Level 2 (Augmentation)**: [level_2/Level_2_Augmentation.ipynb](level_2/Level_2_Augmentation.ipynb)
+- **Level 3 (EfficientNet + Grad-CAM)**: [level_3/Level_3_Advanced_Arch.ipynb](level_3/Level_3_Advanced_Arch.ipynb)
+- **Level 4 (Ensemble)**: [level_4/Level_4_Expert.ipynb](level_4/Level_4_Expert.ipynb)
+- **Level 5 (Production)**: [level_5/Level_5_Production.ipynb](level_5/Level_5_Production.ipynb)
+- **Shared data pipeline**: [shared/dataset.py](shared/dataset.py)
